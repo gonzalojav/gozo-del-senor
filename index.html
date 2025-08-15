@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Gozo del Señor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Card rebote */
+@keyframes bounceCard {
+  0%{transform:scale(1);}
+  30%{transform:scale(1.05);}
+  50%{transform:scale(0.95);}
+  70%{transform:scale(1.02);}
+  100%{transform:scale(1);}
+}
+.bounce { animation: bounceCard 0.6s; }
+
+/* Lluvia */
+.raindrop{
+  position:absolute;
+  width:2px;
+  height:12px;
+  background: rgba(255,255,255,0.6);
+  bottom:100%;
+  animation: fall linear infinite;
+  border-radius:50%;
+}
+@keyframes fall{
+  0%{transform:translateY(0); opacity:1;}
+  100%{transform:translateY(1200px); opacity:0;}
+}
+
+/* Partículas normales */
+.particle{
+  position:absolute;
+  width:4px;
+  height:4px;
+  background:white;
+  border-radius:50%;
+  opacity:0.6;
+  animation: floatParticle linear infinite;
+}
+@keyframes floatParticle{
+  0%{transform:translateY(0) translateX(0);}
+  100%{transform:translateY(-600px) translateX(20px);}
+}
+
+/* Chispas/burbujas mágicas */
+.sparkle{
+  position:absolute;
+  width:6px;
+  height:6px;
+  background: radial-gradient(circle, #fff8, #fff0);
+  border-radius:50%;
+  filter: drop-shadow(0 0 6px #fff);
+  animation: sparkleAnim linear forwards;
+}
+@keyframes sparkleAnim{
+  0%{transform:translateY(0) scale(0.5); opacity:0;}
+  20%{opacity:1; transform: scale(1);}
+  100%{transform:translateY(-150px) translateX(30px) scale(0.2); opacity:0;}
+}
+
+/* Relámpagos */
+.lightning{
+  position:absolute;
+  width:100%;
+  height:100%;
+  top:0;
+  left:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+  animation: flash 0.2s linear forwards;
+}
+@keyframes flash{
+  0%{opacity:1;}
+  100%{opacity:0;}
+}
+
+/* Sol animado */
+.sun{
+  position:absolute;
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  background:radial-gradient(circle, #FFD93D, #FFB200);
+  top:10%;
+  right:10%;
+  box-shadow:0 0 60px #FFD93D, 0 0 120px #FFD93D55;
+  animation: sunMove 10s infinite alternate;
+}
+@keyframes sunMove{
+  0%{transform:translateY(0);}
+  100%{transform:translateY(10px);}
+}
+
+/* Card estilo */
+#card{
+  backdrop-filter: blur(8px);
+  font-family: 'Segoe UI', sans-serif;
+  color:#1e3a8a;
+  position: relative;
+  overflow: visible;
+}
+
+/* Footer */
+footer{
+  font-family: 'Segoe UI', sans-serif;
+  position: relative;
+  overflow: visible;
+}
+
+/* Footer chispas */
+.footer-sparkle{
+  position:absolute;
+  width:5px;
+  height:5px;
+  background: radial-gradient(circle, #fff8, #fff0);
+  border-radius:50%;
+  filter: drop-shadow(0 0 4px #fff);
+  animation: sparkleAnim linear forwards;
+}
+
+/* Responsivo */
+@media(max-width:500px){
+  #osito{width:200px;}
+}
+</style>
+</head>
+<body class="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-blue-400 to-blue-700 transition-all duration-1000 overflow-hidden">
+
+<div id="background" class="absolute w-full h-full top-0 left-0 z-0"></div>
+
+<div id="card" class="relative z-10 bg-white bg-opacity-90 rounded-3xl p-8 text-center shadow-2xl w-11/12 max-w-md transition-all duration-500">
+    <h1 class="text-blue-800 text-2xl mb-4 font-bold">El Gozo del Señor</h1>
+    <img id="osito" src="gif/triste.gif" alt="Niño triste" class="mx-auto mb-4 w-64 transition-opacity duration-500 relative">
+    <div id="mensajeBiblico" class="text-blue-700 text-base min-h-[50px] mb-4 font-semibold"></div>
+    <button onclick="alentar()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg transform transition-all hover:scale-110 hover:-rotate-1">💖 Animar</button>
+    <div id="timer" class="mt-2 text-gray-700 font-semibold"></div>
+</div>
+
+<footer class="mt-8 text-center text-white bg-blue-900 bg-opacity-50 rounded-xl py-4 w-11/12 max-w-md">
+  <p>© 2025 Gonzalo Javier Chipana </p>
+  <p>Que la alegría del Señor llene tu día 💖</p>
+</footer>
+
+<script>
+const osito = document.getElementById('osito');
+const card = document.getElementById('card');
+const mensajeDiv = document.getElementById('mensajeBiblico');
+const timerDiv = document.getElementById('timer');
+const background = document.getElementById('background');
+const footer = document.querySelector('footer');
+
+let tiempoFeliz = 25;
+let intervaloTimer;
+
+const versiculos = [
+    "El gozo del Señor es nuestra fuerza (Nehemías 8:10)",
+    "Regocijaos en el Señor siempre (Filipenses 4:4)",
+    "El fruto del Espíritu es… gozo (Gálatas 5:22)",
+    "Alegraos siempre en el Señor, y otra vez digo: ¡Regocijaos! (Filipenses 4:4)",
+    "El Señor es mi fortaleza y mi escudo; en él confió mi corazón, y fui ayudado; por lo que se gozó mi corazón, y con mi cántico le alabaré (Salmos 28:7)",
+];
+
+// Crear lluvia en estado triste
+function crearTormenta(cantidad=50, particulas=30){
+    background.innerHTML='';
+
+    for(let i=0;i<cantidad;i++){
+        let drop = document.createElement('div');
+        drop.classList.add('raindrop');
+        drop.style.left = Math.random()*100+'%';
+        drop.style.animationDuration=(0.5 + Math.random()*1)+'s';
+        background.appendChild(drop);
+    }
+
+    for(let i=0;i<particulas;i++){
+        let part = document.createElement('div');
+        part.classList.add('particle');
+        part.style.left = Math.random()*100+'%';
+        part.style.top = Math.random()*100+'px';
+        part.style.animationDuration=(5 + Math.random()*5)+'s';
+        background.appendChild(part);
+    }
+}
+
+// Crear burbujas desde el niño
+function crearBurbujasDesdeNiño(cantidad = 30){
+    for(let i=0;i<cantidad;i++){
+        let sparkle = document.createElement('div');
+        sparkle.classList.add('sparkle');
+        sparkle.style.left = (osito.offsetLeft + osito.offsetWidth/2 + (Math.random()*60-30)) + 'px';
+        sparkle.style.top = (osito.offsetTop + osito.offsetHeight/2 + (Math.random()*30-15)) + 'px';
+        sparkle.style.animationDuration = (2 + Math.random()*3)+'s';
+        card.appendChild(sparkle);
+        setTimeout(()=>sparkle.remove(), 3500);
+    }
+}
+
+// Crear burbujas en footer
+function crearBurbujasFooter(cantidad=15){
+    for(let i=0;i<cantidad;i++){
+        let sparkle = document.createElement('div');
+        sparkle.classList.add('footer-sparkle');
+        sparkle.style.left = Math.random()*footer.offsetWidth + 'px';
+        sparkle.style.top = Math.random()*footer.offsetHeight + 'px';
+        sparkle.style.animationDuration = (2 + Math.random()*3)+'s';
+        footer.appendChild(sparkle);
+        setTimeout(()=>sparkle.remove(), 3500);
+    }
+}
+
+// Animar estado feliz
+function alentar(){
+    card.classList.add('bounce');
+    setTimeout(()=>card.classList.remove('bounce'),600);
+
+    osito.style.opacity=0;
+    setTimeout(()=>{
+        osito.src='gif/alegre-4097.gif';
+        osito.style.opacity=1;
+    },300);
+
+    mensajeDiv.innerText = versiculos[Math.floor(Math.random()*versiculos.length)];
+
+    document.body.style.background='linear-gradient(135deg, #fddb92, #d1fdff)';
+    background.innerHTML='';
+
+    // Sol
+    let sun = document.createElement('div');
+    sun.classList.add('sun');
+    background.appendChild(sun);
+
+    crearBurbujasDesdeNiño(30);
+    crearBurbujasFooter(15); // Burbujas en footer
+
+    let tiempoRestante = tiempoFeliz;
+    timerDiv.innerText = `Volverá a estar triste en ${tiempoRestante}s`;
+    clearInterval(intervaloTimer);
+    intervaloTimer = setInterval(()=>{
+        tiempoRestante--;
+        timerDiv.innerText = `Volverá a estar triste en ${tiempoRestante}s`;
+        if(tiempoRestante<=0){
+            clearInterval(intervaloTimer);
+            osito.src='gif/triste.gif';
+            mensajeDiv.innerText='';
+            timerDiv.innerText='';
+            sun.remove();
+            crearTormenta();
+            document.body.style.background='linear-gradient(135deg, #92c8e0, #456472)';
+        }
+    },1000);
+}
+
+// Inicial
+crearTormenta();
+</script>
+
+</body>
+</html>
